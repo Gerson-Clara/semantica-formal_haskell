@@ -93,28 +93,36 @@ mudaVar ((s,i):xs) v n
 ebigStep :: (E,Memoria) -> Int
 ebigStep (Var x,s) = procuraVar s x
 ebigStep (Num n,s) = n
-ebigStep (Soma e1 e2,s)  = ebigStep (e1,s) + ebigStep (e2,s)
---ebigStep (Sub e1 e2,s)  = (subtração)
---ebigStep (Mult e1 e2,s)  = (multiplicação)
--- ebigStep(Div e1 e2,s)
+ebigStep (Soma e1 e2,s) = ebigStep (e1,s) + ebigStep (e2,s)
+ebigStep (Sub e1 e2,s)  = ebigStep (e1,s) - ebigStep (e2,s)
+ebigStep (Mult e1 e2,s) = ebigStep (e1,s) * ebigStep (e2,s)
+ebigStep(Div e1 e2,s)   = div (ebigStep (e1,s)) (ebigStep (e2,s))
 
 
 bbigStep :: (B,Memoria) -> Bool
 bbigStep (TRUE,s)  = True
 bbigStep (FALSE,s) = False
 bbigStep (Not b,s) 
-   | bbigStep (b,s) == True     = False
-   | otherwise                  = True 
---bbigStep (And b1 b2,s )  =
---bbigStep (Or b1 b2,s )  =
---bbigStep (Leq e1 e2,s) =
---bbigStep (Igual e1 e2,s) = -- recebe duas expressões aritméticas e devolve um valor booleano dizendo se são iguais
+    | bbigStep (b,s) == True     = False
+    | otherwise                  = True 
+bbigStep (Or b1 b2,s )
+    | (bbigStep (b1,s) == True) || (bbigStep (b2,s) == True) = True
+    | otherwise = False
+bbigStep (And b1 b2,s )
+    | (bbigStep (b1,s) == False) || (bbigStep (b2,s) == False) = False
+    | otherwise = True
+bbigStep (Leq e1 e2,s)
+    | ebigStep (e1,s) <= ebigStep (e2,s)  = True
+    | otherwise = False
+bbigStep (Igual e1 e2,s)
+    | ebigStep (e1,s) == ebigStep (e2,s) = True
+    | otherwise = False
 
 cbigStep :: (C,Memoria) -> (C,Memoria)
 cbigStep (Skip,s) = (Skip,s)
--- cbigStep (If b c1 c2,s)  
+-- cbigStep (Atrib (Var x) e,s) = (Skip, mudaVar ())
 --cbigStep (Seq c1 c2,s)  
---cbigStep (Atrib (Var x) e,s) 
+--cbigStep (If b c1 c2,s)  
 --     While B C
  -- TenTimes C   ---- Executa o comando C 10 vezes
  -- Repeat C B --- Repeat C until B: executa C enquanto B é falso
