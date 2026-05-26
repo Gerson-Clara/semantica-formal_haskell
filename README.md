@@ -1,1 +1,1 @@
-# semantica-formal_haskell
+# Semântica Formal - Haskell
