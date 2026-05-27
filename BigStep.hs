@@ -118,10 +118,13 @@ bbigStep (Igual e1 e2,s)
     | ebigStep (e1,s) == ebigStep (e2,s) = True
     | otherwise = False
 
+
 cbigStep :: (C,Memoria) -> (C,Memoria)
 cbigStep (Skip,s) = (Skip,s)
--- cbigStep (Atrib (Var x) e,s) = (Skip, mudaVar ())
---cbigStep (Seq c1 c2,s)  
+cbigStep (Atrib (Var x) e,s) = (Skip, mudaVar s x (ebigStep (e,s)))
+cbigStep (Seq c1 c2, s) = 
+    let (Skip, s') = cbigStep (c1, s)
+    in cbigStep (c2, s')
 --cbigStep (If b c1 c2,s)  
 --     While B C
  -- TenTimes C   ---- Executa o comando C 10 vezes
