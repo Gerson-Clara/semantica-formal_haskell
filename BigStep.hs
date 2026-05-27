@@ -1,4 +1,3 @@
-
 -- Definição das árvore sintática para representação dos programas:
 
 data E = Num Int
@@ -87,16 +86,13 @@ mudaVar ((s,i):xs) v n
 ---
 ---------------------------------
 
-
-
-
 ebigStep :: (E,Memoria) -> Int
 ebigStep (Var x,s) = procuraVar s x
 ebigStep (Num n,s) = n
 ebigStep (Soma e1 e2,s) = ebigStep (e1,s) + ebigStep (e2,s)
 ebigStep (Sub e1 e2,s)  = ebigStep (e1,s) - ebigStep (e2,s)
 ebigStep (Mult e1 e2,s) = ebigStep (e1,s) * ebigStep (e2,s)
-ebigStep(Div e1 e2,s)   = div (ebigStep (e1,s)) (ebigStep (e2,s))
+ebigStep (Div e1 e2,s)  = div (ebigStep (e1,s)) (ebigStep (e2,s))
 
 
 bbigStep :: (B,Memoria) -> Bool
@@ -121,30 +117,67 @@ bbigStep (Igual e1 e2,s)
 
 cbigStep :: (C,Memoria) -> (C,Memoria)
 cbigStep (Skip,s) = (Skip,s)
+
 cbigStep (Atrib (Var x) e,s) = (Skip, mudaVar s x (ebigStep (e,s)))
-cbigStep (Seq c1 c2, s) = 
-    let (Skip, s') = cbigStep (c1, s)
-    in cbigStep (c2, s')
---cbigStep (If b c1 c2,s)  
---     While B C
- -- TenTimes C   ---- Executa o comando C 10 vezes
- -- Repeat C B --- Repeat C until B: executa C enquanto B é falso
- -- Loop E E C      ---- Loop e1 e2 c: executa (e2 - e1) vezes o comando C 
- -- DuplaATrib E E E E -- recebe 2 variáveis e 2 expressões (DuplaATrib (Var v1) (Var v2) e1 e2) e faz v1:=e1 e v2:=e2
- --AtribCond B E E E --- AtribCond b (Var v1) e1 e2: se b for verdade, então faz v1:e1, se B for falso faz v1:=e2
--- Swap E E -- swap(x,y): troca o conteúdo das variáveis x e y 
+
+cbigStep (Seq c1 c2, s) = cbigStep (c2, s')
+  where 
+    (Skip, s') = cbigStep (c1, s)
+
+cbigStep (If b c1 c2,s)
+    | bbigStep (b,s) == True = cbigStep (c1,s)
+    | otherwise              = cbigStep (c2,s)
+
+cbigStep (While b c, s) = cbigStep (If b (Seq c (While b c)) Skip, s)
+
+cbigStep (TenTimes c, s) = cbigStep (Loop (Num 0) (Num 10) c, s)
+
+cbigStep (Repeat c b, s) = cbigStep (Seq c (If b Skip (Repeat c b)), s)
+
+cbigStep (Loop e1 e2 c, s)
+    | v1 < v2   = cbigStep (Seq c (Loop (Num (v1 + 1)) (Num v2) c), s)
+    | otherwise = (Skip, s)
+  where 
+    v1 = ebigStep (e1, s)
+    v2 = ebigStep (e2, s)
+
+cbigStep (DuplaATrib (Var v1) (Var v2) e1 e2, s) = (Skip, s2)
+  where 
+    ve1 = ebigStep (e1, s)
+    ve2 = ebigStep (e2, s)
+    s1    = mudaVar s v1 ve1     
+    s2    = mudaVar s1 v2 ve2
+
+cbigStep (AtribCond b (Var v1) e1 e2, s) = cbigStep (If b (Atrib (Var v1) e1) (Atrib (Var v1) e2), s)
+
+cbigStep (Swap (Var x) (Var y), s) = (Skip, s2)
+  where 
+    vx = procuraVar s x
+    vy = procuraVar s y
+    s1   = mudaVar s x vy
+    s2   = mudaVar s1 y vx
+
 
 --------------------------------------
 ---
 --- Exemplos de programas para teste
 ---
---- O ALUNO DEVE IMPLEMENTAR EXEMPLOS DE PROGRAMAS QUE USEM:
---- * Loop
---- * Dupla Atribuição
---- * Repeat until
---- * swap
---- * atrib cond
 -------------------------------------
+
+progLoop :: C
+progLoop = Loop (Num 0) (Num 3) (Atrib (Var "x") (Soma (Var "x") (Num 1)))
+
+progDuplaAtrib :: C
+progDuplaAtrib = DuplaATrib (Var "x") (Var "y") (Num 10) (Num 20)
+
+progRepeat :: C
+progRepeat = Repeat (Atrib (Var "x") (Soma (Var "x") (Num 1))) (Leq (Num 5) (Var "x"))
+
+progSwap :: C
+progSwap = Seq (DuplaATrib (Var "x") (Var "y") (Num 1) (Num 2)) (Swap (Var "x") (Var "y"))
+
+progAtribCond :: C
+progAtribCond = AtribCond (Leq (Var "x") (Num 0)) (Var "y") (Num 100) (Num 200)
 
 exSigma2 :: Memoria
 exSigma2 = [("x",3), ("y",0), ("z",0)]
@@ -157,20 +190,9 @@ exSigma2 = [("x",3), ("y",0), ("z",0)]
 progExp1 :: E
 progExp1 = Soma (Num 3) (Soma (Var "x") (Var "y"))
 
----
---- para rodar:
--- *Main> ebigStep (progExp1, exSigma)
--- 13
--- *Main> ebigStep (progExp1, exSigma2)
--- 6
-
---- Para rodar os próximos programas é necessário primeiro implementar as regras da semântica
----
-
 
 ---
 --- Exemplos de expressões booleanas:
-
 
 teste1 :: B
 teste1 = (Leq (Soma (Num 3) (Num 3))  (Mult (Num 2) (Num 3)))
