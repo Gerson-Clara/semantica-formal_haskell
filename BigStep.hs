@@ -213,10 +213,3 @@ fatorial = (Seq (Atrib (Var "y") (Num 1))
                 (While (Not (Igual (Var "x") (Num 1)))
                        (Seq (Atrib (Var "y") (Mult (Var "y") (Var "x")))
                             (Atrib (Var "x") (Sub (Var "x") (Num 1))))))
-
-fibonacci :: C
-fibonacci = Seq (DuplaATrib (Var "a") (Var "b") (Num 0) (Num 1)) 
-                (Seq (Atrib (Var "count") (Num 0)) 
-                     (While (Not (Igual (Var "count") (Var "n"))) 
-                            (Seq (DuplaATrib (Var "a") (Var "b") (Var "b") (Soma (Var "a") (Var "b"))) 
-                                 (Atrib (Var "count") (Soma (Var "count") (Num 1))))))
