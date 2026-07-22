@@ -1,3 +1,4 @@
+-- Gerson Farias Clara, Gustavo Domenech de Souza
 -- Definição das árvore sintática para representação dos programas:
 
 data E = Num Int
